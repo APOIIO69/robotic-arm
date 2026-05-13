@@ -6,12 +6,12 @@ PROTO RoboArmL2 [
   field SFFloat    forearmLength  0.4
 ]
 {
-  %{
+  %<
     let shoulderLength = fields.shoulderLength.value;
     if (shoulderLength <= 0) shoulderLength = 0.45;
     let forearmLength = fields.forearmLength.value;
     if (forearmLength <= 0) forearmLength = 0.4;
-  }%
+  >%
   Robot {
     translation IS translation
     rotation IS rotation
@@ -51,7 +51,7 @@ PROTO RoboArmL2 [
           translation 0 0 0.1
           children [
             Transform {
-              translation 0 0 %{= shoulderLength / 2 }%
+              translation 0 0 %<= shoulderLength / 2 >%
               children [
                 DEF SHOULDER_SHAPE Shape {
                   appearance PBRAppearance {
@@ -60,7 +60,7 @@ PROTO RoboArmL2 [
                     metalness 0
                   }
                   geometry Box {
-                    size 0.05 0.05 %{= shoulderLength }%
+                    size 0.05 0.05 %<= shoulderLength >%
                   }
                 }
               ]
@@ -68,7 +68,7 @@ PROTO RoboArmL2 [
             HingeJoint {
               jointParameters HingeJointParameters {
                 axis 0 1 0
-                anchor 0 0 %{= shoulderLength }%
+                anchor 0 0 %<= shoulderLength >%
               }
               device [
                 RotationalMotor {
@@ -79,10 +79,10 @@ PROTO RoboArmL2 [
                 }
               ]
               endPoint DEF FOREARM_LINK Solid {
-                translation 0 0 %{= shoulderLength }%
+                translation 0 0 %<= shoulderLength >%
                 children [
                   Transform {
-                    translation 0 0 %{= forearmLength / 2 }%
+                    translation 0 0 %<= forearmLength / 2 >%
                     children [
                       DEF FOREARM_SHAPE Shape {
                         appearance PBRAppearance {
@@ -91,17 +91,17 @@ PROTO RoboArmL2 [
                           metalness 0
                         }
                         geometry Box {
-                          size 0.04 0.04 %{= forearmLength }%
+                          size 0.04 0.04 %<= forearmLength >%
                         }
                       }
                     ]
                   }
                 ]
                 boundingObject Transform {
-                  translation 0 0 %{= forearmLength / 2 }%
+                  translation 0 0 %<= forearmLength / 2 >%
                   children [
                     Box {
-                      size 0.04 0.04 %{= forearmLength }%
+                      size 0.04 0.04 %<= forearmLength >%
                     }
                   ]
                 }
@@ -111,10 +111,10 @@ PROTO RoboArmL2 [
             }
           ]
           boundingObject Transform {
-            translation 0 0 %{= shoulderLength / 2 }%
+            translation 0 0 %<= shoulderLength / 2 >%
             children [
               Box {
-                size 0.05 0.05 %{= shoulderLength }%
+                size 0.05 0.05 %<= shoulderLength >%
               }
             ]
           }
