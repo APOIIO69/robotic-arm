@@ -1,0 +1,7 @@
+#VRML_SIM R2023b utf8
+WorldInfo { basicTimeStep 10 }
+Viewpoint { orientation -0.2 -0.2 0.9 2.5 position 2 2 1 }
+TexturedBackground {}
+TexturedBackgroundLight {}
+RectangleArena {}
+RoboArmL2 { translation 0 0 0.1 }

@@ -1,0 +1,40 @@
+#VRML_SIM R2023b utf8
+PROTO RoboArmL2 [
+  field SFVec3f    translation 0 0 0
+  field SFRotation rotation    0 0 1 0
+  field SFFloat    shoulderLength 0.45
+  field SFFloat    forearmLength  0.4
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    children [
+      DEF BASE_LINK Solid {
+        children [
+          Shape { appearance PBRAppearance { baseColor 0.5 0.5 0.5 } geometry Cylinder { height 0.2 radius 0.1 } }
+        ]
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters { axis 0 0 1 }
+        device [ RotationalMotor { name "base_motor" } PositionSensor { name "base_sensor" } ]
+        endPoint Solid {
+          children [
+            DEF SHOULDER Shape { appearance PBRAppearance { baseColor 0.8 0.1 0.1 } geometry Box { size 0.05 0.05 IS shoulderLength } }
+            HingeJoint {
+              jointParameters HingeJointParameters { axis 0 1 0 anchor 0 0 0.225 }
+              device [ RotationalMotor { name "elbow_motor" } PositionSensor { name "elbow_sensor" } ]
+              endPoint Solid {
+                translation 0 0 0.45
+                children [
+                  DEF FOREARM Shape { appearance PBRAppearance { baseColor 0.1 0.1 0.8 } geometry Box { size 0.04 0.04 IS forearmLength } }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+    controller "arm_controller"
+  }
+}
