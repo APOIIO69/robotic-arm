@@ -1,4 +1,10 @@
 #VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "../protos/RoboArmL2.proto"
+
 WorldInfo { basicTimeStep 10 }
 Viewpoint { orientation -0.2 -0.2 0.9 2.5 position 2 2 1 }
 TexturedBackground {}
