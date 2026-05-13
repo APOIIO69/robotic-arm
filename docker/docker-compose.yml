@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  # Официальный агент micro-ROS
+  # Официальный агент micro-ROS (через зеркало)
   uros-agent:
-    image: microros/micro-ros-agent:humble
+    image: docker.m.daocloud.io/microros/micro-ros-agent:humble
     container_name: uros_agent
     network_mode: host
     restart: always
