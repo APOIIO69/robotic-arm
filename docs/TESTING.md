@@ -1,81 +1,81 @@
-# Integration Testing Guide
+# Руководство по интеграционному тестированию
 
-This document describes how to set up and run the integration test for the Robotic Arm project, connecting the Webots simulation with the ROS 2 control logic via micro-ROS.
+Этот документ описывает, как настроить и запустить интеграционный тест для проекта Robotic Arm, соединяя симуляцию Webots с логикой управления ROS 2 через micro-ROS.
 
-## Prerequisites
+## Предварительные требования
 
-1.  **Webots:** Download and install Webots from [cyberbotics.com](https://cyberbotics.com/).
-2.  **Docker & Docker Compose:** Required to run the micro-ROS agent.
-3.  **ROS 2 Humble:** Required to run the server-side control node.
-4.  **micro-ROS Client Libraries:** (For Webots controller compilation) Ensure you have micro-ROS client libraries installed or available for the Webots compiler.
+1.  **Webots:** Скачайте и установите Webots с [cyberbotics.com](https://cyberbotics.com/).
+2.  **Docker и Docker Compose:** Необходимы для запуска агента micro-ROS.
+3.  **ROS 2 Humble:** Необходим для запуска серверной ноды управления (на стороне хоста или в контейнере).
+4.  **Клиентские библиотеки micro-ROS:** (Для компиляции контроллера Webots) Убедитесь, что библиотеки micro-ROS доступны для компилятора Webots.
 
-## Step 1: Start the micro-ROS Agent
+## Шаг 1: Запуск агента micro-ROS
 
-The micro-ROS agent acts as a bridge between the low-level controller (Webots) and the ROS 2 network. It runs inside a Docker container.
+Агент micro-ROS выступает в роли моста между низкоуровневым контроллером (Webots) и сетью ROS 2. Он работает внутри Docker-контейнера.
 
-1.  Navigate to the `docker/` directory:
+1.  Перейдите в директорию `docker/`:
     ```bash
     cd docker
     ```
-2.  Build and start the agent:
+2.  Соберите и запустите агента:
     ```bash
     docker-compose up -d --build
     ```
-3.  Verify the agent is running and listening on UDP port 8888:
+3.  Убедитесь, что агент запущен и слушает UDP порт 8888:
     ```bash
     docker-compose logs -f
     ```
 
-## Step 2: Launch and Compile Webots Simulation
+## Шаг 2: Запуск и компиляция симуляции Webots
 
-1.  Launch **Webots**.
-2.  Open the world file: `simulation/worlds/robotic_arm.wbt`.
-3.  **Compile the Controller:**
-    - If the arm doesn't move or connection fails, you may need to compile the controller.
-    - Open the `arm_controller.c` file in the Webots text editor.
-    - Click the **Build** (gear icon) button.
-    - *Note: Ensure the micro-ROS headers and libraries are in your include/library path as specified in `simulation/controllers/arm_controller/Makefile`.*
-4.  Once compiled, click **Play** to start the simulation.
-5.  Check the Webots console for "micro-ROS node initialized" message.
+1.  Запустите **Webots**.
+2.  Откройте файл мира: `simulation/worlds/robotic_arm.wbt`.
+3.  **Компиляция контроллера:**
+    - Если рука не двигается или соединение не устанавливается, возможно, нужно скомпилировать контроллер.
+    - Откройте файл `arm_controller.c` в текстовом редакторе Webots.
+    - Нажмите кнопку **Сборка** (иконка шестеренки).
+    - *Примечание: Убедитесь, что заголовки и библиотеки micro-ROS прописаны в путях поиска, как указано в `simulation/controllers/arm_controller/Makefile`.*
+4.  После компиляции нажмите кнопку **Play** для запуска симуляции.
+5.  Проверьте консоль Webots на наличие сообщения "micro-ROS node initialized".
 
-## Step 3: Run the ROS 2 Control Node
+## Шаг 3: Запуск ноды управления ROS 2
 
-The control node implements the PID logic and sends commands to the arm based on feedback.
+Нода управления реализует логику ПИД-регулятора и отправляет команды на руку на основе обратной связи.
 
-1.  Open a new terminal.
-2.  Source your ROS 2 environment:
+1.  Откройте новый терминал.
+2.  Настройте окружение ROS 2:
     ```bash
     source /opt/ros/humble/setup.bash
     ```
-3.  Run the control node:
+3.  Запустите ноду управления:
     ```bash
     python3 server/arm_control_node.py
     ```
-    *If ROS 2 is not installed on your host, you can run this node inside another ROS 2 Docker container sharing the host network.*
+    *Если ROS 2 не установлен на вашем хосте, вы можете запустить эту ноду внутри другого Docker-контейнера ROS 2, используя `network_mode: host`.*
 
-## Step 4: Verification and Interaction
+## Шаг 4: Проверка и взаимодействие
 
-1.  **Check Topics:**
+1.  **Проверка топиков:**
     ```bash
     ros2 topic list
     ```
-    You should see:
-    - `/arm/state` (published by Webots)
-    - `/arm/command` (published by the control node)
+    Вы должны увидеть:
+    - `/arm/state` (публикуется Webots)
+    - `/arm/command` (публикуется нодой управления)
 
-2.  **Monitor Telemetry:**
+2.  **Мониторинг телеметрии:**
     ```bash
     ros2 topic echo /arm/state
     ```
 
-3.  **Manually Send Commands:**
-    If you want to bypass the control node and test raw movements:
+3.  **Ручная отправка команд:**
+    Если вы хотите протестировать движение в обход ноды управления:
     ```bash
     ros2 topic pub /arm/command std_msgs/msg/Float64MultiArray "{data: [0.7, -0.3]}"
     ```
 
-## Troubleshooting
+## Поиск и устранение неисправностей
 
--   **UDP Port Conflict:** If port 8888 is already in use, the agent will fail to start.
--   **Docker Network:** On Linux, `network_mode: host` allows the container to use the host's network stack directly. On macOS/Windows, you might need to use `127.0.0.1` and ensure port 8888 is forwarded.
--   **Build Failures:** Ensure all micro-ROS dependencies are satisfied. The controller expects `rclc`, `rcl`, and other micro-ROS libraries.
+-   **Конфликт портов UDP:** Если порт 8888 уже занят, агент не сможет запуститься.
+-   **Сеть Docker:** В Linux режим `network_mode: host` позволяет контейнеру использовать сетевой стек хоста напрямую. В macOS/Windows может потребоваться использование `127.0.0.1` и проброс порта 8888.
+-   **Ошибки сборки:** Убедитесь, что все зависимости micro-ROS удовлетворены. Контроллер ожидает наличия библиотек `rclc`, `rcl` и других компонентов micro-ROS.
