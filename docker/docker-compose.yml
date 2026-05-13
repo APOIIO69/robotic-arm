@@ -4,5 +4,12 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
+      network: host
+      args:
+        - http_proxy=http://127.0.0.1:8118
+        - https_proxy=http://127.0.0.1:8118
     network_mode: host
-    command: bash -c "source /uros_ws/install/setup.bash && ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888"
+    environment:
+      - http_proxy=http://127.0.0.1:8118
+      - https_proxy=http://127.0.0.1:8118
+    command: bash -c "source /opt/ros/humble/setup.bash && ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888"
