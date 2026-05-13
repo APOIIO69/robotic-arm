@@ -27,20 +27,27 @@ WORKDIR /uros_ws
 RUN mkdir -p src && cd src && \
     git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git
 
-# Настраиваем зеркало для rosdep
+# 2. Обновляем rosdep индексы (в отдельном слое для кэширования)
 ENV ROSDISTRO_INDEX_URL=https://mirrors.tuna.tsinghua.edu.cn/rosdistro/index-v4.yaml
 RUN source /opt/ros/humble/setup.bash && \
-    rosdep update --include-eol-distros && \
-    rosdep install --from-paths src --ignore-src -y
+    echo "Running rosdep update..." && \
+    rosdep update --include-eol-distros -v
 
-# Собираем утилиты установки
-RUN source /opt/ros/humble/setup.bash && colcon build
+# 3. Установка зависимостей через rosdep (используем apt внутри)
+RUN apt-get update && source /opt/ros/humble/setup.bash && \
+    echo "Running rosdep install..." && \
+    rosdep install --from-paths src --ignore-src -y --rosdistro humble && \
+    rm -rf /var/lib/apt/lists/*
 
-# Создаем воркспейс клиента (используем bash напрямую для надежности)
+# 4. Собираем утилиты установки
+RUN source /opt/ros/humble/setup.bash && \
+    colcon build --event-handlers console_direct+
+
+# 5. Создаем воркспейс клиента
 RUN source /opt/ros/humble/setup.bash && source install/setup.bash && \
     ros2 run micro_ros_setup create_client_ws.sh -n host
 
-# Собираем клиентскую библиотеку
+# 6. Собираем клиентскую библиотеку
 RUN source /opt/ros/humble/setup.bash && source install/setup.bash && \
     ros2 run micro_ros_setup build_client.sh
 
