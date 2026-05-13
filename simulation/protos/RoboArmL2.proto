@@ -6,32 +6,120 @@ PROTO RoboArmL2 [
   field SFFloat    forearmLength  0.4
 ]
 {
+  %JS
+    let shoulderLength = fields.shoulderLength.value;
+    if (shoulderLength <= 0) shoulderLength = 0.45;
+    let forearmLength = fields.forearmLength.value;
+    if (forearmLength <= 0) forearmLength = 0.4;
+  %
   Robot {
     translation IS translation
     rotation IS rotation
     children [
       DEF BASE_LINK Solid {
         children [
-          Shape { appearance PBRAppearance { baseColor 0.5 0.5 0.5 } geometry Cylinder { height 0.2 radius 0.1 } }
+          DEF BASE_SHAPE Shape {
+            appearance PBRAppearance {
+              baseColor 0.5 0.5 0.5
+              roughness 1
+              metalness 0
+            }
+            geometry Cylinder {
+              height 0.2
+              radius 0.1
+            }
+          }
         ]
+        boundingObject USE BASE_SHAPE
+        physics Physics {
+        }
       }
       HingeJoint {
-        jointParameters HingeJointParameters { axis 0 0 1 }
-        device [ RotationalMotor { name "base_motor" } PositionSensor { name "base_sensor" } ]
-        endPoint Solid {
+        jointParameters HingeJointParameters {
+          axis 0 0 1
+          anchor 0 0 0.1
+        }
+        device [
+          RotationalMotor {
+            name "base_motor"
+          }
+          PositionSensor {
+            name "base_sensor"
+          }
+        ]
+        endPoint DEF SHOULDER_LINK Solid {
+          translation 0 0 0.1
           children [
-            DEF SHOULDER Shape { appearance PBRAppearance { baseColor 0.8 0.1 0.1 } geometry Box { size 0.05 0.05 IS shoulderLength } }
+            Transform {
+              translation 0 0 %<= shoulderLength / 2 %>
+              children [
+                DEF SHOULDER_SHAPE Shape {
+                  appearance PBRAppearance {
+                    baseColor 0.8 0.1 0.1
+                    roughness 1
+                    metalness 0
+                  }
+                  geometry Box {
+                    size 0.05 0.05 %<= shoulderLength %>
+                  }
+                }
+              ]
+            }
             HingeJoint {
-              jointParameters HingeJointParameters { axis 0 1 0 anchor 0 0 0.225 }
-              device [ RotationalMotor { name "elbow_motor" } PositionSensor { name "elbow_sensor" } ]
-              endPoint Solid {
-                translation 0 0 0.45
+              jointParameters HingeJointParameters {
+                axis 0 1 0
+                anchor 0 0 %<= shoulderLength %>
+              }
+              device [
+                RotationalMotor {
+                  name "elbow_motor"
+                }
+                PositionSensor {
+                  name "elbow_sensor"
+                }
+              ]
+              endPoint DEF FOREARM_LINK Solid {
+                translation 0 0 %<= shoulderLength %>
                 children [
-                  DEF FOREARM Shape { appearance PBRAppearance { baseColor 0.1 0.1 0.8 } geometry Box { size 0.04 0.04 IS forearmLength } }
+                  Transform {
+                    translation 0 0 %<= forearmLength / 2 %>
+                    children [
+                      DEF FOREARM_SHAPE Shape {
+                        appearance PBRAppearance {
+                          baseColor 0.1 0.1 0.8
+                          roughness 1
+                          metalness 0
+                        }
+                        geometry Box {
+                          size 0.04 0.04 %<= forearmLength %>
+                        }
+                      }
+                    ]
+                  }
                 ]
+                boundingObject Transform {
+                  translation 0 0 %<= forearmLength / 2 %>
+                  children [
+                    Box {
+                      size 0.04 0.04 %<= forearmLength %>
+                    }
+                  ]
+                }
+                physics Physics {
+                }
               }
             }
           ]
+          boundingObject Transform {
+            translation 0 0 %<= shoulderLength / 2 %>
+            children [
+              Box {
+                size 0.05 0.05 %<= shoulderLength %>
+              }
+            ]
+          }
+          physics Physics {
+          }
         }
       }
     ]
