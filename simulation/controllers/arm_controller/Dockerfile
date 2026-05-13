@@ -22,35 +22,18 @@ RUN apt-get update && apt-get install -y \
     python3-colcon-common-extensions \
     && rm -rf /var/lib/apt/lists/*
 
-# Создаем воркспейс для сборки клиентской библиотеки micro-ROS
+# Создаем воркспейс и собираем библиотеку micro-ROS одним блоком
 WORKDIR /uros_ws
-RUN git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
-
-# 2. Обновляем rosdep индексы
 ENV ROSDISTRO_INDEX_URL=https://mirrors.tuna.tsinghua.edu.cn/rosdistro/index-v4.yaml
-RUN source /opt/ros/humble/setup.bash && \
-    rosdep update --include-eol-distros
 
-# 3. Установка зависимостей через rosdep
-RUN apt-get update && source /opt/ros/humble/setup.bash && \
+RUN git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup && \
+    source /opt/ros/humble/setup.bash && \
+    rosdep update --include-eol-distros && \
     rosdep install --from-paths src --ignore-src -y --rosdistro humble && \
-    rm -rf /var/lib/apt/lists/*
-
-# 4. Собираем утилиты установки
-RUN source /opt/ros/humble/setup.bash && \
-    colcon build --event-handlers console_direct+
-
-# 5. Создаем воркспейс клиента (абсолютный поиск)
-RUN source /opt/ros/humble/setup.bash && source install/setup.bash && \
-    SCRIPT=$(find /uros_ws -name create_client_ws.sh | head -n 1) && \
-    echo "Using script at: $SCRIPT" && \
-    /bin/bash "$SCRIPT" -n host
-
-# 6. Собираем клиентскую библиотеку (абсолютный поиск)
-RUN source /opt/ros/humble/setup.bash && source install/setup.bash && \
-    SCRIPT=$(find /uros_ws -name build_client.sh | head -n 1) && \
-    echo "Using script at: $SCRIPT" && \
-    /bin/bash "$SCRIPT"
+    colcon build --event-handlers console_direct+ && \
+    source install/setup.bash && \
+    bash src/micro_ros_setup/scripts/create_client_ws.sh -n host && \
+    bash src/micro_ros_setup/scripts/build_client.sh
 
 # Копируем исходный код нашего контроллера
 WORKDIR /app
