@@ -1,6 +1,12 @@
 # Используем ROS 2 Humble как базу для контроллера
 FROM mirror.gcr.io/library/ros:humble-ros-base
 
+# Аргументы для прокси
+ARG http_proxy
+ARG https_proxy
+ENV http_proxy=$http_proxy
+ENV https_proxy=$https_proxy
+
 # Используем bash для поддержки source и расширенных команд
 SHELL ["/bin/bash", "-c"]
 
