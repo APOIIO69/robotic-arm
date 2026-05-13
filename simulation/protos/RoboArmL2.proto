@@ -17,6 +17,7 @@ PROTO RoboArmL2 [
     rotation IS rotation
     children [
       DEF BASE_LINK Solid {
+        name "base"
         children [
           DEF BASE_SHAPE Shape {
             appearance PBRAppearance {
@@ -48,6 +49,7 @@ PROTO RoboArmL2 [
           }
         ]
         endPoint DEF SHOULDER_LINK Solid {
+          name "shoulder"
           translation 0 0 0.1
           children [
             Transform {
@@ -79,6 +81,7 @@ PROTO RoboArmL2 [
                 }
               ]
               endPoint DEF FOREARM_LINK Solid {
+                name "forearm"
                 translation 0 0 %<= shoulderLength >%
                 children [
                   Transform {

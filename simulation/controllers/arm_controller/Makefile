@@ -19,4 +19,10 @@ LIBRARIES = -L$(MICRO_ROS_LIB_DIR) -lrcl -lrclc -lrcutils -lrosidl_runtime_c -lr
 null :=
 space := $(null) $(null)
 WEBOTS_HOME_PATH?=$(subst $(space),\ ,$(strip $(subst \,/,$(WEBOTS_HOME))))
-include $(WEBOTS_HOME_PATH)/resources/projects/default/controllers/Makefile.include
+
+# Try both common locations for Makefile.include
+ifneq ("$(wildcard $(WEBOTS_HOME_PATH)/resources/Makefile.include)","")
+    include $(WEBOTS_HOME_PATH)/resources/Makefile.include
+else
+    include $(WEBOTS_HOME_PATH)/resources/projects/default/controllers/Makefile.include
+endif
