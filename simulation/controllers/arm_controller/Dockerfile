@@ -24,18 +24,15 @@ RUN apt-get update && apt-get install -y \
 
 # Создаем воркспейс для сборки клиентской библиотеки micro-ROS
 WORKDIR /uros_ws
-RUN mkdir -p src && cd src && \
-    git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git
+RUN git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
 
 # 2. Обновляем rosdep индексы
 ENV ROSDISTRO_INDEX_URL=https://mirrors.tuna.tsinghua.edu.cn/rosdistro/index-v4.yaml
 RUN source /opt/ros/humble/setup.bash && \
-    echo "Running rosdep update..." && \
-    rosdep update --include-eol-distros -v
+    rosdep update --include-eol-distros
 
 # 3. Установка зависимостей через rosdep
 RUN apt-get update && source /opt/ros/humble/setup.bash && \
-    echo "Running rosdep install..." && \
     rosdep install --from-paths src --ignore-src -y --rosdistro humble && \
     rm -rf /var/lib/apt/lists/*
 
@@ -43,17 +40,13 @@ RUN apt-get update && source /opt/ros/humble/setup.bash && \
 RUN source /opt/ros/humble/setup.bash && \
     colcon build --event-handlers console_direct+
 
-# 5. Создаем воркспейс клиента (ищем скрипт динамически)
+# 5. Создаем воркспейс клиента
 RUN source /opt/ros/humble/setup.bash && source install/setup.bash && \
-    SCRIPT_PATH=$(find src -name create_client_ws.sh | head -n 1) && \
-    echo "Found script at: $SCRIPT_PATH" && \
-    bash $SCRIPT_PATH -n host
+    bash src/micro_ros_setup/scripts/create_client_ws.sh -n host
 
-# 6. Собираем клиентскую библиотеку (ищем скрипт динамически)
+# 6. Собираем клиентскую библиотеку
 RUN source /opt/ros/humble/setup.bash && source install/setup.bash && \
-    SCRIPT_PATH=$(find src -name build_client.sh | head -n 1) && \
-    echo "Found script at: $SCRIPT_PATH" && \
-    bash $SCRIPT_PATH
+    bash src/micro_ros_setup/scripts/build_client.sh
 
 # Копируем исходный код нашего контроллера
 WORKDIR /app
