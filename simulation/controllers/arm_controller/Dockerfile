@@ -13,20 +13,22 @@ SHELL ["/bin/bash", "-c"]
 # Переходим под root
 USER root
 
-# Устанавливаем зависимости
+# Устанавливаем базовые зависимости
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     git \
     python3-pip \
     python3-colcon-common-extensions \
+    libasio-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Создаем воркспейс и собираем библиотеку micro-ROS одним блоком
 WORKDIR /uros_ws
 ENV ROSDISTRO_INDEX_URL=https://mirrors.tuna.tsinghua.edu.cn/rosdistro/index-v4.yaml
 
-RUN git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup && \
+RUN apt-get update && \
+    git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup && \
     source /opt/ros/humble/setup.bash && \
     rosdep update --include-eol-distros && \
     rosdep install --from-paths src --ignore-src -y --rosdistro humble && \
