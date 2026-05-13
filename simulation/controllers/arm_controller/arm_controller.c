@@ -43,8 +43,16 @@ int main(int argc, char **argv) {
     base_sensor = wb_robot_get_device("base_sensor");
     elbow_sensor = wb_robot_get_device("elbow_sensor");
 
+    if (!base_motor || !elbow_motor || !base_sensor || !elbow_sensor) {
+        fprintf(stderr, "Error: Could not find all required devices\n");
+        wb_robot_cleanup();
+        return -1;
+    }
+
     wb_position_sensor_enable(base_sensor, TIME_STEP);
     wb_position_sensor_enable(elbow_sensor, TIME_STEP);
+    wb_motor_enable_torque_feedback(base_motor, TIME_STEP);
+    wb_motor_enable_torque_feedback(elbow_motor, TIME_STEP);
 
     // Initial targets
     wb_motor_set_position(base_motor, 0.0);
@@ -58,13 +66,20 @@ int main(int argc, char **argv) {
     // Initialize support with default options (assumes agent is reachable)
     rc = rclc_support_init(&support, 0, NULL, &allocator);
     if (rc != RCL_RET_OK) {
-        printf("Error initializing micro-ROS support\n");
+        fprintf(stderr, "Error initializing micro-ROS support\n");
+        wb_robot_cleanup();
         return -1;
     }
 
     // Initialize node
     rcl_node_t node;
     rc = rclc_node_init_default(&node, "webots_arm_node", "", &support);
+    if (rc != RCL_RET_OK) {
+        fprintf(stderr, "Error initializing micro-ROS node\n");
+        rclc_support_fini(&support);
+        wb_robot_cleanup();
+        return -1;
+    }
 
     // Initialize state publisher
     rc = rclc_publisher_init_default(
@@ -72,6 +87,13 @@ int main(int argc, char **argv) {
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
         "/arm/state");
+    if (rc != RCL_RET_OK) {
+        fprintf(stderr, "Error initializing state publisher\n");
+        rcl_node_fini(&node);
+        rclc_support_fini(&support);
+        wb_robot_cleanup();
+        return -1;
+    }
 
     // Initialize command subscriber
     rc = rclc_subscription_init_default(
@@ -79,13 +101,23 @@ int main(int argc, char **argv) {
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64MultiArray),
         "/arm/command");
+    if (rc != RCL_RET_OK) {
+        fprintf(stderr, "Error initializing command subscriber\n");
+        rcl_publisher_fini(&state_publisher, &node);
+        rcl_node_fini(&node);
+        rclc_support_fini(&support);
+        wb_robot_cleanup();
+        return -1;
+    }
 
     // Initialize state message
+    sensor_msgs__msg__JointState__init(&state_msg);
     static char *joint_names[] = {"base_joint", "elbow_joint"};
     state_msg.name.data = (rosidl_runtime_c__String *)malloc(2 * sizeof(rosidl_runtime_c__String));
     state_msg.name.size = 2;
     state_msg.name.capacity = 2;
     for (int i = 0; i < 2; i++) {
+        rosidl_runtime_c__String__init(&state_msg.name.data[i]);
         rosidl_runtime_c__String__assign(&state_msg.name.data[i], joint_names[i]);
     }
 
@@ -98,6 +130,7 @@ int main(int argc, char **argv) {
     state_msg.effort.capacity = 2;
 
     // Initialize command message for subscriber allocation
+    std_msgs__msg__Float64MultiArray__init(&command_msg);
     command_msg.data.data = (double *)malloc(2 * sizeof(double));
     command_msg.data.size = 0;
     command_msg.data.capacity = 2;
@@ -105,14 +138,24 @@ int main(int argc, char **argv) {
     // Initialize executor
     rclc_executor_t executor;
     rc = rclc_executor_init(&executor, &support.context, 1, &allocator);
+    if (rc != RCL_RET_OK) {
+        fprintf(stderr, "Error initializing executor\n");
+        goto cleanup;
+    }
+
     rc = rclc_executor_add_subscription(&executor, &command_subscriber, &command_msg, &command_callback, ON_NEW_DATA);
+    if (rc != RCL_RET_OK) {
+        fprintf(stderr, "Error adding subscription to executor\n");
+        rclc_executor_fini(&executor);
+        goto cleanup;
+    }
 
     while (wb_robot_step(TIME_STEP) != -1) {
         // Read sensors
         state_msg.position.data[0] = wb_position_sensor_get_value(base_sensor);
         state_msg.position.data[1] = wb_position_sensor_get_value(elbow_sensor);
         
-        // Torque feedback (Webots returns torque for RotationalMotor)
+        // Torque feedback
         state_msg.effort.data[0] = wb_motor_get_torque_feedback(base_motor);
         state_msg.effort.data[1] = wb_motor_get_torque_feedback(elbow_motor);
 
@@ -132,11 +175,11 @@ int main(int argc, char **argv) {
         wb_motor_set_position(elbow_motor, target_positions[1]);
     }
 
-    // Cleanup
-    free(state_msg.name.data);
-    free(state_msg.position.data);
-    free(state_msg.effort.data);
-    free(command_msg.data.data);
+    rclc_executor_fini(&executor);
+
+cleanup:
+    sensor_msgs__msg__JointState__fini(&state_msg);
+    std_msgs__msg__Float64MultiArray__fini(&command_msg);
 
     rcl_publisher_fini(&state_publisher, &node);
     rcl_subscription_fini(&command_subscriber, &node);

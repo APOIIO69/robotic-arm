@@ -16,22 +16,15 @@ PROTO RoboArmL2 [
     translation IS translation
     rotation IS rotation
     children [
-      DEF BASE_LINK Solid {
-        children [
-          DEF BASE_SHAPE Shape {
-            appearance PBRAppearance {
-              baseColor 0.5 0.5 0.5
-              roughness 1
-              metalness 0
-            }
-            geometry Cylinder {
-              height 0.2
-              radius 0.1
-            }
-          }
-        ]
-        boundingObject USE BASE_SHAPE
-        physics Physics {
+      DEF BASE_SHAPE Shape {
+        appearance PBRAppearance {
+          baseColor 0.5 0.5 0.5
+          roughness 1
+          metalness 0
+        }
+        geometry Cylinder {
+          height 0.2
+          radius 0.1
         }
       }
       HingeJoint {
@@ -123,6 +116,9 @@ PROTO RoboArmL2 [
         }
       }
     ]
+    boundingObject USE BASE_SHAPE
+    physics Physics {
+    }
     controller "arm_controller"
   }
 }
