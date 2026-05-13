@@ -43,13 +43,17 @@ RUN apt-get update && source /opt/ros/humble/setup.bash && \
 RUN source /opt/ros/humble/setup.bash && \
     colcon build --event-handlers console_direct+
 
-# 5. Создаем воркспейс клиента (запускаем скрипт напрямую)
+# 5. Создаем воркспейс клиента (ищем скрипт динамически)
 RUN source /opt/ros/humble/setup.bash && source install/setup.bash && \
-    bash src/micro_ros_setup/scripts/create_client_ws.sh -n host
+    SCRIPT_PATH=$(find src -name create_client_ws.sh | head -n 1) && \
+    echo "Found script at: $SCRIPT_PATH" && \
+    bash $SCRIPT_PATH -n host
 
-# 6. Собираем клиентскую библиотеку (запускаем скрипт напрямую)
+# 6. Собираем клиентскую библиотеку (ищем скрипт динамически)
 RUN source /opt/ros/humble/setup.bash && source install/setup.bash && \
-    bash src/micro_ros_setup/scripts/build_client.sh
+    SCRIPT_PATH=$(find src -name build_client.sh | head -n 1) && \
+    echo "Found script at: $SCRIPT_PATH" && \
+    bash $SCRIPT_PATH
 
 # Копируем исходный код нашего контроллера
 WORKDIR /app
