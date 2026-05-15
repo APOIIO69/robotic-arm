@@ -1,0 +1,21 @@
+# Webots build artifacts
+simulation/controllers/*/build/
+simulation/controllers/*/arm_controller
+simulation/controllers/*/*.d
+
+# ROS 2 & micro-ROS workspaces
+microros_ws/
+microros_agent_ws/
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Local scripts created during setup
+setup_ros2.sh
+build_microros_libs.sh
+install_agent_native.sh
+
+# Environment
+.env
+.cache/

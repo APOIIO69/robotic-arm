@@ -1,28 +1,40 @@
 # Webots Makefile for C controllers
-# Webots standard Makefile should be included at the end
-
-# List of your source files
 C_SOURCES = arm_controller.c
 
-# micro-ROS include and library paths
-# These should be adjusted to the actual location of micro-ROS libraries in the environment
-MICRO_ROS_INCLUDE_DIR ?= /usr/local/include
-MICRO_ROS_LIB_DIR ?= /usr/local/lib
+# ROS 2 and micro-ROS paths
+ROS_DISTRO = humble
+ROS_PATH = /opt/ros/$(ROS_DISTRO)
+MICRO_ROS_PATH = /usr/local
 
-# Add micro-ROS to include paths
-INCLUDE = -I$(MICRO_ROS_INCLUDE_DIR)
+# Include paths
+INCLUDE = -I$(MICRO_ROS_PATH)/include \
+	-I$(MICRO_ROS_PATH)/include/rclc \
+	-I$(MICRO_ROS_PATH)/include/rmw_microxrcedds_c \
+	-I$(MICRO_ROS_PATH)/include/microxrcedds_client \
+	-I$(MICRO_ROS_PATH)/include/sensor_msgs \
+	-I$(MICRO_ROS_PATH)/include/std_msgs \
+	-I$(MICRO_ROS_PATH)/include/builtin_interfaces \
+	-I$(MICRO_ROS_PATH)/include/action_msgs \
+	-I$(MICRO_ROS_PATH)/include/unique_identifier_msgs \
+	-I$(ROS_PATH)/include/rcl \
+	-I$(ROS_PATH)/include/rcl_action \
+	-I$(ROS_PATH)/include/rcutils \
+	-I$(ROS_PATH)/include/rmw \
+	-I$(ROS_PATH)/include/rosidl_runtime_c \
+	-I$(ROS_PATH)/include/rosidl_typesupport_interface \
+	-I$(ROS_PATH)/include/rcl_yaml_param_parser \
+	-I$(ROS_PATH)/include/rosidl_typesupport_introspection_c
 
-# Add micro-ROS libraries
-LIBRARIES = -L$(MICRO_ROS_LIB_DIR) -lrcl -lrclc -lrcutils -lrosidl_runtime_c -lrosidl_typesupport_c -lrosidl_typesupport_microxrcedds_c -lmicroxrcedds_client -lrmw_microxrcedds_c
+# Library paths and libraries
+LIBRARIES = -L$(MICRO_ROS_PATH)/lib \
+	-L$(ROS_PATH)/lib \
+	-lrclc -lrmw_microxrcedds -lmicroxrcedds_client \
+	-lrcl -lrcutils -lrcl_action \
+	-lrosidl_runtime_c -lrosidl_typesupport_c \
+	-lrosidl_typesupport_microxrcedds_c \
+	-lsensor_msgs__rosidl_typesupport_microxrcedds_c -lsensor_msgs__rosidl_generator_c \
+	-lstd_msgs__rosidl_typesupport_microxrcedds_c -lstd_msgs__rosidl_generator_c
 
-# Default Webots Makefile logic
-null :=
-space := $(null) $(null)
-WEBOTS_HOME_PATH?=$(subst $(space),\ ,$(strip $(subst \,/,$(WEBOTS_HOME))))
-
-# Try both common locations for Makefile.include
-ifneq ("$(wildcard $(WEBOTS_HOME_PATH)/resources/Makefile.include)","")
-    include $(WEBOTS_HOME_PATH)/resources/Makefile.include
-else
-    include $(WEBOTS_HOME_PATH)/resources/projects/default/controllers/Makefile.include
-endif
+# Webots Home for Snap installation
+WEBOTS_HOME = /snap/webots/current/usr/share/webots
+include $(WEBOTS_HOME)/resources/Makefile.include

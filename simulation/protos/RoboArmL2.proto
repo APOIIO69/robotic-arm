@@ -4,6 +4,7 @@ PROTO RoboArmL2 [
   field SFRotation rotation    0 0 1 0
   field SFFloat    shoulderLength 0.45
   field SFFloat    forearmLength  0.4
+  field SFString   controller "arm_controller"
 ]
 {
   %<
@@ -16,54 +17,31 @@ PROTO RoboArmL2 [
     translation IS translation
     rotation IS rotation
     children [
-      DEF BASE_LINK Solid {
-        name "base"
-        children [
-          DEF BASE_SHAPE Shape {
-            appearance PBRAppearance {
-              baseColor 0.5 0.5 0.5
-              roughness 1
-              metalness 0
-            }
-            geometry Cylinder {
-              height 0.2
-              radius 0.1
-            }
-          }
-        ]
-        boundingObject USE BASE_SHAPE
-        physics Physics {
-        }
+      # Визуальное основание
+      Shape {
+        appearance PBRAppearance { baseColor 0.2 0.2 0.2 roughness 1 }
+        geometry DEF BASE_GEOM Cylinder { height 0.2 radius 0.25 }
       }
       HingeJoint {
         jointParameters HingeJointParameters {
           axis 0 0 1
-          anchor 0 0 0.1
+          anchor 0 0 0.15
+          dampingConstant 1.0
         }
         device [
-          RotationalMotor {
-            name "base_motor"
-          }
-          PositionSensor {
-            name "base_sensor"
-          }
+          RotationalMotor { name "base_motor" }
+          PositionSensor { name "base_sensor" }
         ]
-        endPoint DEF SHOULDER_LINK Solid {
+        endPoint Solid {
           name "shoulder"
-          translation 0 0 0.1
+          translation 0 0 0.15
           children [
             Transform {
               translation 0 0 %<= shoulderLength / 2 >%
               children [
-                DEF SHOULDER_SHAPE Shape {
-                  appearance PBRAppearance {
-                    baseColor 0.8 0.1 0.1
-                    roughness 1
-                    metalness 0
-                  }
-                  geometry Box {
-                    size 0.05 0.05 %<= shoulderLength >%
-                  }
+                Shape {
+                  appearance PBRAppearance { baseColor 0.8 0.1 0.1 roughness 1 }
+                  geometry DEF SHOULDER_GEOM Box { size 0.05 0.05 %<= shoulderLength >% }
                 }
               ]
             }
@@ -71,61 +49,50 @@ PROTO RoboArmL2 [
               jointParameters HingeJointParameters {
                 axis 0 1 0
                 anchor 0 0 %<= shoulderLength >%
+                dampingConstant 0.5
               }
               device [
-                RotationalMotor {
-                  name "elbow_motor"
-                }
-                PositionSensor {
-                  name "elbow_sensor"
-                }
+                RotationalMotor { name "elbow_motor" }
+                PositionSensor { name "elbow_sensor" }
               ]
-              endPoint DEF FOREARM_LINK Solid {
+              endPoint Solid {
                 name "forearm"
                 translation 0 0 %<= shoulderLength >%
                 children [
                   Transform {
                     translation 0 0 %<= forearmLength / 2 >%
                     children [
-                      DEF FOREARM_SHAPE Shape {
-                        appearance PBRAppearance {
-                          baseColor 0.1 0.1 0.8
-                          roughness 1
-                          metalness 0
-                        }
-                        geometry Box {
-                          size 0.04 0.04 %<= forearmLength >%
-                        }
+                      Shape {
+                        appearance PBRAppearance { baseColor 0.1 0.1 0.8 roughness 1 }
+                        geometry DEF FOREARM_GEOM Box { size 0.04 0.04 %<= forearmLength >% }
                       }
                     ]
                   }
                 ]
                 boundingObject Transform {
                   translation 0 0 %<= forearmLength / 2 >%
-                  children [
-                    Box {
-                      size 0.04 0.04 %<= forearmLength >%
-                    }
-                  ]
+                  children [ USE FOREARM_GEOM ]
                 }
-                physics Physics {
-                }
+                physics Physics { density -1 mass 0.5 }
               }
             }
           ]
           boundingObject Transform {
             translation 0 0 %<= shoulderLength / 2 >%
-            children [
-              Box {
-                size 0.05 0.05 %<= shoulderLength >%
-              }
-            ]
+            children [ USE SHOULDER_GEOM ]
           }
-          physics Physics {
-          }
+          physics Physics { density -1 mass 0.8 }
         }
       }
     ]
-    controller "arm_controller"
+    name "robotic_arm"
+    boundingObject USE BASE_GEOM
+    # immoblie TRUE делает базу неподвижной, но позволяет работать физике суставов
+    static TRUE 
+    physics Physics {
+      density -1
+      mass 10
+    }
+    controller IS controller
   }
 }

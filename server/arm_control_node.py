@@ -1,3 +1,4 @@
+import math
 try:
     import rclpy
     from rclpy.node import Node
@@ -8,7 +9,7 @@ except ImportError:
     HAS_ROS2 = False
 
 class PID:
-    def __init__(self, kp, ki, kd, min_output=-10.0, max_output=10.0):
+    def __init__(self, kp, ki, kd, min_output=-5.0, max_output=5.0):
         self.kp = kp
         self.ki = ki
         self.kd = kd
@@ -19,7 +20,8 @@ class PID:
         self.prev_error = 0.0
 
     def compute(self, setpoint, measurement, dt):
-        if dt <= 0:
+        # Защита от некорректных данных
+        if dt <= 0 or math.isnan(measurement):
             return 0.0
             
         error = setpoint - measurement
@@ -37,8 +39,7 @@ class PID:
         
         output = p_term + i_term + d_term
         
-        # Clamping and simple anti-windup: 
-        # If output is saturated, don't accumulate integral if error has same sign
+        # Clamping and simple anti-windup
         if output > self.max_output:
             if error > 0:
                 self.integral -= error * dt
@@ -56,50 +57,50 @@ if HAS_ROS2:
         def __init__(self):
             super().__init__('arm_control_node')
             
-            # Parameters (default targets)
             self.declare_parameter('targets', [0.0, 0.0])
             self.targets = self.get_parameter('targets').value
             
-            # PID Controllers for base and elbow
+            # Стабильные коэффициенты (высокий KD для гашения колебаний)
+            # Внимание: знаки инвертированы (отрицательные), так как моторы в Webots смотрят в другую сторону
             self.pids = [
-                PID(kp=5.0, ki=0.1, kd=0.1), # Base
-                PID(kp=5.0, ki=0.1, kd=0.1)  # Elbow
+                PID(kp=-0.3, ki=-0.0, kd=-0.1, min_output=-1.5, max_output=1.5), # Base
+                PID(kp=-0.5, ki=-0.0, kd=-0.1, min_output=-1.5, max_output=1.5)  # Elbow
             ]
             
-            # Subscriptions
-            self.subscription = self.create_subscription(
-                JointState,
-                '/arm/state',
-                self.state_callback,
-                10
-            )
-            
-            # Publishers
-            self.publisher = self.create_publisher(
-                Float64MultiArray,
-                '/arm/command',
-                10
-            )
+            self.subscription = self.create_subscription(JointState, '/arm/state', self.state_callback, 10)
+            self.publisher = self.create_publisher(Float64MultiArray, '/arm/command', 10)
+            self.setpoint_sub = self.create_subscription(Float64MultiArray, '/arm/setpoint', self.setpoint_callback, 10)
             
             self.last_time = self.get_clock().now()
             self.get_logger().info('Arm Control Node started')
+
+        def setpoint_callback(self, msg):
+            if len(msg.data) >= 2:
+                self.targets = list(msg.data)
+                self.get_logger().info(f'New targets: {self.targets}')
 
         def state_callback(self, msg):
             current_time = self.get_clock().now()
             dt = (current_time - self.last_time).nanoseconds / 1e9
             self.last_time = current_time
             
-            if dt <= 0:
-                return
-
-            # Assuming msg.position contains [base_pos, elbow_pos]
-            if len(msg.position) < 2:
+            if dt <= 0 or len(msg.position) < 2:
                 return
 
             efforts = []
+            log_str = "Control: "
             for i in range(2):
-                effort = self.pids[i].compute(self.targets[i], msg.position[i], dt)
+                pos = msg.position[i]
+                if math.isnan(pos): pos = 0.0
+                
+                effort = self.pids[i].compute(self.targets[i], pos, dt)
                 efforts.append(effort)
+                log_str += f"J{i}: T={self.targets[i]:.1f} P={pos:.2f} E={effort:.2f} | "
+            
+            if not hasattr(self, 'count'): self.count = 0
+            if self.count % 20 == 0:
+                self.get_logger().info(log_str)
+            self.count += 1
                 
             command_msg = Float64MultiArray()
             command_msg.data = efforts
@@ -115,5 +116,3 @@ if HAS_ROS2:
 if __name__ == '__main__':
     if HAS_ROS2:
         main()
-    else:
-        print("ROS 2 not found. PID class is available for import.")

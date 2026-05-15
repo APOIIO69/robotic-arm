@@ -24,15 +24,14 @@ else
     DOCKER_COMPOSE="docker-compose"
 fi
 
-echo "Step 1: Building and starting micro-ROS agent..."
-# Ensure we are in the project root
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-cd "$SCRIPT_DIR/docker"
-
-$DOCKER_COMPOSE up -d --build
+echo "Step 1: Starting micro-ROS agent..."
+# Assuming native installation
+source microros_agent_ws/install/local_setup.bash
+ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888 &
+AGENT_PID=$!
 
 echo ""
-echo "Agent started successfully! It is listening on UDP port 8888."
+echo "Agent started successfully (PID: $AGENT_PID)! It is listening on UDP port 8888."
 echo ""
 echo "Step 2: Start Webots Simulation"
 echo "  1. Open Webots."

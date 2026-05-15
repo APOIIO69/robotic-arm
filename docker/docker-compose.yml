@@ -1,27 +1,5 @@
 services:
-  # Официальный агент micro-ROS (через зеркало)
-  uros-agent:
-    image: docker.m.daocloud.io/microros/micro-ros-agent:humble
-    container_name: uros_agent
-    network_mode: host
-    restart: always
-    environment:
-      - http_proxy=http://127.0.0.1:8118
-      - https_proxy=http://127.0.0.1:8118
-    command: udp4 --port 8888
-
-  # Наша нода управления на Python
-  arm-controller:
-    image: mirror.gcr.io/library/ros:humble-ros-base
-    container_name: arm_controller
-    network_mode: host
-    volumes:
-      - ../server:/app
-    working_dir: /app
-    restart: always
-    environment:
-      - http_proxy=http://127.0.0.1:8118
-      - https_proxy=http://127.0.0.1:8118
-    command: bash -c "source /opt/ros/humble/setup.bash && python3 arm_control_node.py"
-    depends_on:
-      - uros-agent
+  # Мы убрали все сервисы, так как всё теперь работает нативно на хосте.
+  # Этот файл оставлен для истории или если в будущем понадобится контейнеризация.
+  # Для запуска используйте скрипты на хосте.
+  {}

@@ -10,6 +10,12 @@
 #include <sensor_msgs/msg/joint_state.h>
 #include <std_msgs/msg/float64_multi_array.h>
 
+// Explicitly include microxrcedds typesupport
+#include <rosidl_typesupport_microxrcedds_c/identifier.h>
+#include <sensor_msgs/msg/detail/joint_state__rosidl_typesupport_microxrcedds_c.h>
+#include <std_msgs/msg/detail/float64_multi_array__rosidl_typesupport_microxrcedds_c.h>
+
+#include <rosidl_runtime_c/string_functions.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -54,9 +60,9 @@ int main(int argc, char **argv) {
     wb_motor_enable_torque_feedback(base_motor, TIME_STEP);
     wb_motor_enable_torque_feedback(elbow_motor, TIME_STEP);
 
-    // Initial targets
-    wb_motor_set_position(base_motor, 0.0);
-    wb_motor_set_position(elbow_motor, 0.0);
+    // Set motors to torque control mode (position must be INFINITY)
+    wb_motor_set_position(base_motor, INFINITY);
+    wb_motor_set_position(elbow_motor, INFINITY);
 
     // micro-ROS initialization
     rcl_allocator_t allocator = rcl_get_default_allocator();
@@ -85,7 +91,7 @@ int main(int argc, char **argv) {
     rc = rclc_publisher_init_default(
         &state_publisher,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
+        ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(rosidl_typesupport_microxrcedds_c, sensor_msgs, msg, JointState)(),
         "/arm/state");
     if (rc != RCL_RET_OK) {
         fprintf(stderr, "Error initializing state publisher\n");
@@ -99,7 +105,7 @@ int main(int argc, char **argv) {
     rc = rclc_subscription_init_default(
         &command_subscriber,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64MultiArray),
+        ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(rosidl_typesupport_microxrcedds_c, std_msgs, msg, Float64MultiArray)(),
         "/arm/command");
     if (rc != RCL_RET_OK) {
         fprintf(stderr, "Error initializing command subscriber\n");
@@ -170,9 +176,9 @@ int main(int argc, char **argv) {
         // Handle subscriptions
         rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
 
-        // Apply commands
-        wb_motor_set_position(base_motor, target_positions[0]);
-        wb_motor_set_position(elbow_motor, target_positions[1]);
+        // Apply commands (torque control)
+        wb_motor_set_torque(base_motor, target_positions[0]);
+        wb_motor_set_torque(elbow_motor, target_positions[1]);
     }
 
     rclc_executor_fini(&executor);
