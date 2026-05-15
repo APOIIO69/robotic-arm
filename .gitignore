@@ -1,21 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ROS 2 workspaces (Host migration)
+microros_ws/
+microros_agent_ws/
+build/
+install/
+log/
+
 # Webots build artifacts
 simulation/controllers/*/build/
 simulation/controllers/*/arm_controller
-simulation/controllers/*/*.d
+*.wbt.bak
+*.proto.bak
 
-# ROS 2 & micro-ROS workspaces
-microros_ws/
-microros_agent_ws/
-
-# Python artifacts
-__pycache__/
-*.pyc
-
-# Local scripts created during setup
-setup_ros2.sh
-build_microros_libs.sh
-install_agent_native.sh
-
-# Environment
-.env
+# Snap / System specific
 .cache/
+.config/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
