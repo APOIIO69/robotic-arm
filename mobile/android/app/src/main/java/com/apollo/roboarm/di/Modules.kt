@@ -10,4 +10,5 @@ val appModule = module {
     single { createKtorClient() }
     single { RoboArmRepository(get()) }
     viewModel { HomeViewModel(get()) }
+    viewModel { RobotDetailsViewModel(get()) }
 }
