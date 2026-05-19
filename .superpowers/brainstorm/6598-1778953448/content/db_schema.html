@@ -1,0 +1,29 @@
+<h2>Проектирование базы данных</h2>
+<p class="subtitle">Схема таблиц и связей</p>
+
+<div class="mockup">
+  <div class="mockup-header">Таблицы SQLite (SQLAlchemy)</div>
+  <div class="mockup-body">
+    <pre style="font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+<b>lines</b>
+  id (PK), name, description
+
+<b>robots</b>
+  id (PK), line_id (FK), name, model, type,
+  has_gripper, has_torch, ...
+
+<b>sensors</b>
+  id (PK), robot_id (FK), label, type, unit,
+  normal_min, normal_max
+
+<b>notifications</b>
+  id (PK), type (critical/warning), robot_name,
+  line_name, message, timestamp
+    </pre>
+  </div>
+</div>
+
+<div class="section">
+  <p class="label">Логика сопоставления</p>
+  <p>Каждый <code>Robot</code> в БД будет иметь поле <code>ros_topic_prefix</code> (например, <code>/arm</code>). Бэк будет слушать эти топики и отдавать данные в API, обогащая их информацией о порогах из таблицы <code>sensors</code>.</p>
+</div>

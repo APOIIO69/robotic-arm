@@ -1,0 +1,37 @@
+<h2>Стратегия хранения данных</h2>
+<p class="subtitle">Что пойдет в SQLite, а что останется в памяти?</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="config" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>Конфигурация (Обязательно)</h3>
+      <p>Линии, роботы, их типы и пороги датчиков. Нужно для восстановления структуры после рестарта.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="notifications" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>Уведомления (Обязательно)</h3>
+      <p>История событий (critical/warning). БД идеально подходит для хранения логов.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="telemetry" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>Телеметрия (Опционально)</h3>
+      <p>Текущие значения датчиков. <br><b>PRO:</b> Можно строить графики. <br><b>CON:</b> Высокая нагрузка на диск при частом обновлении.</p>
+    </div>
+  </div>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>Hybrid Approach (Моя рекомендация)</h4>
+    <ul>
+      <li>Конфиг и логи — в SQLite.</li>
+      <li>Live-телеметрия — в RAM (FastAPI State).</li>
+      <li>Снимки (snapshots) для графиков — раз в 1-5 минут в БД.</li>
+    </ul>
+  </div>
+</div>

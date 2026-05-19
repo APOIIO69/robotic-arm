@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = RoboArmTheme.colors.background
+                    color = RoboArmTheme.colors.bg
                 ) {
                     AppNavHost(navController = navController)
                 }

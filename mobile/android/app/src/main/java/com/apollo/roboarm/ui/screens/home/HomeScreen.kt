@@ -12,7 +12,9 @@ import com.apollo.roboarm.data.models.LineDto
 import com.apollo.roboarm.data.models.RobotStatus
 import com.apollo.roboarm.ui.components.LineCard
 import com.apollo.roboarm.ui.components.StatCard
+import com.apollo.roboarm.ui.theme.RoboArmColors
 import com.apollo.roboarm.ui.theme.RoboArmTheme
+import com.apollo.roboarm.ui.theme.RoboArmTypography
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,6 +24,8 @@ fun HomeScreen(
     onNavigateToLine: (Int) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    val colors = RoboArmTheme.colors
+    val typography = RoboArmTheme.typography
 
     LaunchedEffect(Unit) {
         viewModel.handleIntent(HomeIntent.LoadLines)
@@ -41,16 +45,16 @@ fun HomeScreen(
                 title = {
                     Text(
                         "Панель управления",
-                        style = RoboArmTheme.typography.titleLg,
-                        color = RoboArmTheme.colors.textPrimary
+                        style = typography.titleLg,
+                        color = colors.textPrimary
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = RoboArmTheme.colors.background
+                    containerColor = colors.bg
                 )
             )
         },
-        containerColor = RoboArmTheme.colors.background
+        containerColor = colors.bg
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -59,14 +63,14 @@ fun HomeScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             item {
-                DashboardSection(state.lines)
+                DashboardSection(state.lines, colors, typography)
             }
 
             item {
                 Text(
                     text = "Производственные линии",
-                    style = RoboArmTheme.typography.titleMd,
-                    color = RoboArmTheme.colors.textPrimary,
+                    style = typography.titleMd,
+                    color = colors.textPrimary,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                 )
             }
@@ -74,14 +78,14 @@ fun HomeScreen(
             if (state.isLoading && state.lines.isEmpty()) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(32.dp)) {
-                        CircularProgressIndicator(color = RoboArmTheme.colors.blue)
+                        CircularProgressIndicator(color = colors.blue)
                     }
                 }
             } else if (state.error != null && state.lines.isEmpty()) {
                 item {
                     Text(
                         text = "Ошибка: ${state.error}",
-                        color = RoboArmTheme.colors.critical,
+                        color = colors.critical,
                         modifier = Modifier.padding(16.dp)
                     )
                 }
@@ -102,7 +106,11 @@ fun HomeScreen(
 }
 
 @Composable
-fun DashboardSection(lines: List<LineDto>) {
+fun DashboardSection(
+    lines: List<LineDto>,
+    colors: RoboArmColors,
+    typography: RoboArmTypography
+) {
     val totalRobots = lines.sumOf { it.robots_count }
     val criticalLines = lines.count { it.status.uppercase() == "CRITICAL" }
 
@@ -116,14 +124,14 @@ fun DashboardSection(lines: List<LineDto>) {
             title = "Роботы",
             subtitle = "Всего в сети",
             value = totalRobots.toString().padStart(2, '0'),
-            color = RoboArmTheme.colors.blue,
+            color = colors.blue,
             modifier = Modifier.weight(1f)
         )
         StatCard(
             title = "Ошибки",
             subtitle = "Критические",
             value = criticalLines.toString().padStart(2, '0'),
-            color = if (criticalLines > 0) RoboArmTheme.colors.critical else RoboArmTheme.colors.ok,
+            color = if (criticalLines > 0) colors.critical else colors.ok,
             modifier = Modifier.weight(1f)
         )
     }
@@ -136,4 +144,3 @@ private fun mapStringToStatus(status: String): RobotStatus {
         RobotStatus.OK
     }
 }
-

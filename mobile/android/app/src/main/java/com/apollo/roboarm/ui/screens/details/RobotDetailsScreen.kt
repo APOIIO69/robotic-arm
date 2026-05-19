@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +34,8 @@ fun RobotDetailsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
+    val colors = RoboArmTheme.colors
+    val typography = RoboArmTheme.typography
 
     LaunchedEffect(robotId) {
         viewModel.handleIntent(RobotDetailsIntent.LoadTelemetry(robotId))
@@ -45,14 +48,14 @@ fun RobotDetailsScreen(
                     Column {
                         Text(
                             text = state.robot?.name ?: "Робот #$robotId",
-                            style = RoboArmTheme.typography.titleMd,
-                            color = RoboArmTheme.colors.textPrimary
+                            style = typography.titleMd,
+                            color = colors.textPrimary
                         )
                         state.robot?.let {
                             Text(
                                 text = it.model,
-                                style = RoboArmTheme.typography.caption,
-                                color = RoboArmTheme.colors.textTertiary
+                                style = typography.caption,
+                                color = colors.textTertiary
                             )
                         }
                     }
@@ -72,25 +75,25 @@ fun RobotDetailsScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = RoboArmTheme.colors.background
+                    containerColor = colors.bg
                 )
             )
         },
-        containerColor = RoboArmTheme.colors.background
+        containerColor = colors.bg
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             TabRow(
                 selectedTabIndex = selectedTab,
-                containerColor = RoboArmTheme.colors.background,
-                contentColor = RoboArmTheme.colors.blue,
+                containerColor = colors.bg,
+                contentColor = colors.blue,
                 indicator = { tabPositions ->
                     TabRowDefaults.SecondaryIndicator(
                         Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                        color = RoboArmTheme.colors.blue
+                        color = colors.blue
                     )
                 },
                 divider = {
-                    HorizontalDivider(color = RoboArmTheme.colors.border)
+                    HorizontalDivider(color = colors.border)
                 }
             ) {
                 Tab(
@@ -99,8 +102,8 @@ fun RobotDetailsScreen(
                     text = {
                         Text(
                             "Телеметрия",
-                            style = RoboArmTheme.typography.titleMd,
-                            color = if (selectedTab == 0) RoboArmTheme.colors.textPrimary else RoboArmTheme.colors.textSecondary
+                            style = typography.titleMd,
+                            color = if (selectedTab == 0) colors.textPrimary else colors.textSecondary
                         )
                     }
                 )
@@ -110,8 +113,8 @@ fun RobotDetailsScreen(
                     text = {
                         Text(
                             "Управление",
-                            style = RoboArmTheme.typography.titleMd,
-                            color = if (selectedTab == 1) RoboArmTheme.colors.textPrimary else RoboArmTheme.colors.textSecondary
+                            style = typography.titleMd,
+                            color = if (selectedTab == 1) colors.textPrimary else colors.textSecondary
                         )
                     }
                 )
@@ -135,14 +138,14 @@ fun RobotDetailsScreen(
                 if (state.isLoading && state.sensors.isEmpty()) {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
-                        color = RoboArmTheme.colors.blue
+                        color = colors.blue
                     )
                 }
 
                 state.error?.let { error ->
                     Text(
                         text = error,
-                        color = RoboArmTheme.colors.critical,
+                        color = colors.critical,
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .padding(16.dp)

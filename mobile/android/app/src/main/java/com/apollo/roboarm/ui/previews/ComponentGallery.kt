@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
@@ -19,6 +18,8 @@ import com.apollo.roboarm.ui.theme.RoboArmTheme
 
 @Composable
 fun ComponentGallery() {
+    val colors = RoboArmTheme.colors
+    val typography = RoboArmTheme.typography
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -39,14 +40,14 @@ fun ComponentGallery() {
                 title = "Temp",
                 subtitle = "Average",
                 value = "24°C",
-                color = RoboArmTheme.colors.ok,
+                color = colors.ok,
                 modifier = Modifier.weight(1f)
             )
             StatCard(
                 title = "Load",
                 subtitle = "Peak",
                 value = "92%",
-                color = RoboArmTheme.colors.critical,
+                color = colors.critical,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -101,13 +102,13 @@ fun ComponentGallery() {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ActionButton(
                 text = "CALIBRATE",
-                icon = Icons.Default.Build,
+                icon = Icons.Default.Settings,
                 isActive = false,
                 onClick = {}
             )
             ActionButton(
                 text = "CALIBRATING",
-                icon = Icons.Default.Build,
+                icon = Icons.Default.Settings,
                 isActive = true,
                 onClick = {}
             )
@@ -119,14 +120,16 @@ fun ComponentGallery() {
 
 @Composable
 private fun SectionTitle(title: String) {
+    val colors = RoboArmTheme.colors
+    val typography = RoboArmTheme.typography
     Column {
         Text(
             text = title,
-            style = RoboArmTheme.typography.titleMd,
-            color = RoboArmTheme.colors.textTertiary
+            style = typography.titleMd,
+            color = colors.textTertiary
         )
         Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider(color = RoboArmTheme.colors.border)
+        HorizontalDivider(color = colors.border)
     }
 }
 
@@ -134,7 +137,7 @@ private fun SectionTitle(title: String) {
 @Composable
 fun ComponentGalleryPreview() {
     RoboArmTheme(darkTheme = true) {
-        Surface(color = RoboArmTheme.colors.background) {
+        Surface(color = RoboArmTheme.colors.bg) {
             ComponentGallery()
         }
     }

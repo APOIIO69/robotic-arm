@@ -5,8 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -97,7 +96,7 @@ fun RobotCard(
     statusText: String,
     status: RobotStatus,
     modifier: Modifier = Modifier,
-    icon: ImageVector = Icons.Default.Build
+    icon: ImageVector = Icons.Default.Settings
 ) {
     val borderColor = if (status != RobotStatus.OK) {
         getStatusColor(status).copy(alpha = 0.3f)
@@ -156,7 +155,7 @@ fun RobotCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 StatusPill(status = status, label = status.name)
                 Icon(
-                    imageVector = Icons.Default.ChevronRight,
+                    imageVector = Icons.Default.KeyboardArrowRight,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
                     tint = RoboArmTheme.colors.textTertiary

@@ -1,0 +1,24 @@
+<h2>Архитектурный паттерн</h2>
+<p class="subtitle">Как мы будем управлять состоянием экранов?</p>
+
+<div class="options">
+  <div class="option" data-choice="mvvm">
+    <div class="letter">VM</div>
+    <div class="content">
+      <h3>MVVM (Стандарт)</h3>
+      <p>ViewModel хранит состояние, UI подписывается на него. Самый популярный и простой в поддержке подход.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="mvi">
+    <div class="letter">I</div>
+    <div class="content">
+      <h3>MVI (Unidirectional Data Flow)</h3>
+      <p>Состояние — это единый неизменяемый объект. Действия (Intent) меняют состояние. Отлично подходит для Jetpack Compose.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <p class="label">Рекомендация</p>
+  <p>Для RoboArm я рекомендую <strong>MVI</strong> (или MVVM с StateFlow), так как в Compose очень удобно работать с единственным источником истины для всего экрана.</p>
+</div>

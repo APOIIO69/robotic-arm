@@ -4,9 +4,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,7 +30,7 @@ fun EmergencyStopButton(
     val containerColor = if (isStopped) RoboArmTheme.colors.elevated else RoboArmTheme.colors.criticalDim
     val contentColor = if (isStopped) RoboArmTheme.colors.textSecondary else RoboArmTheme.colors.critical
     val borderColor = if (isStopped) RoboArmTheme.colors.border else RoboArmTheme.colors.critical
-    val icon = if (isStopped) Icons.Default.PlayArrow else Icons.Default.Stop
+    val icon = if (isStopped) Icons.Default.PlayArrow else Icons.Default.Clear
     val text = if (isStopped) "ВОЗОБНОВИТЬ РАБОТУ" else "АВАРИЙНАЯ ОСТАНОВКА"
 
     Button(
@@ -120,13 +120,13 @@ fun ControlsPreview() {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ActionButton(
                     text = "Torch",
-                    icon = Icons.Default.Build,
+                    icon = Icons.Default.Settings,
                     onClick = {},
                     isActive = false
                 )
                 ActionButton(
                     text = "Torch",
-                    icon = Icons.Default.Build,
+                    icon = Icons.Default.Settings,
                     onClick = {},
                     isActive = true
                 )

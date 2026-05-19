@@ -140,11 +140,15 @@ def get_robot_telemetry(robot_id: int):
     positions = live_data.get("position", [])
     
     mapped_sensors = []
+    overall_status = "ok"
     for i, s in enumerate(sensors):
         val = positions[i] if i < len(positions) else 0.0
         status = "ok"
         if s[5] is not None and val < s[5]: status = "warning"
         if s[6] is not None and val > s[6]: status = "critical"
+        
+        if status == "critical": overall_status = "critical"
+        elif status == "warning" and overall_status == "ok": overall_status = "warning"
         
         mapped_sensors.append({
             "id": s[0],
@@ -160,7 +164,7 @@ def get_robot_telemetry(robot_id: int):
             "id": robot[0],
             "name": robot[2],
             "model": robot[3],
-            "status": "ok"
+            "status": overall_status
         },
         "sensors": mapped_sensors
     }

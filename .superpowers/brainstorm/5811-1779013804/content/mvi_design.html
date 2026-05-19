@@ -1,0 +1,37 @@
+<h2>Архитектура MVI для RoboArm</h2>
+<p class="subtitle">Принцип работы однонаправленного потока данных (UDF)</p>
+
+<div class="mockup">
+  <div class="mockup-header">MVI Loop</div>
+  <div class="mockup-body">
+    <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+      <div style="border: 1px solid #4F87FF; padding: 10px; border-radius: 8px;">
+        <b style="color: #4F87FF;">State</b> (UI State)<br>
+        <i>Например: Loading, Success(lines), Error</i>
+      </div>
+      <div style="text-align: center;">↓ рендерит ↓</div>
+      <div style="border: 1px solid #32D74B; padding: 10px; border-radius: 8px;">
+        <b style="color: #32D74B;">View</b> (Compose UI)<br>
+        <i>Пользователь нажимает на "Линию"</i>
+      </div>
+      <div style="text-align: center;">↓ отправляет ↓</div>
+      <div style="border: 1px solid #FF9F0A; padding: 10px; border-radius: 8px;">
+        <b style="color: #FF9F0A;">Intent</b> (User Action)<br>
+        <i>SelectLine(id), ToggleEmergencyStop</i>
+      </div>
+      <div style="text-align: center;">↓ обрабатывается в ↓</div>
+      <div style="border: 1px solid #FF3B30; padding: 10px; border-radius: 8px;">
+        <b style="color: #FF3B30;">ViewModel / Reducer</b><br>
+        <i>Запрос к Ktor API -> Обновление State</i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <p class="label">Компоненты навигации</p>
+  <ul>
+    <li><b>Jetpack Navigation:</b> Использование Type-Safe Navigation (Kotlin DSL).</li>
+    <li><b>Bottom Bar:</b> 3 вкладки (Home, Support, Reports).</li>
+  </ul>
+</div>
