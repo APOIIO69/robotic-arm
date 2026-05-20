@@ -63,8 +63,8 @@ if HAS_ROS2:
             # Стабильные коэффициенты (высокий KD для гашения колебаний)
             # Внимание: знаки инвертированы (отрицательные), так как моторы в Webots смотрят в другую сторону
             self.pids = [
-                PID(kp=-0.3, ki=-0.0, kd=-0.1, min_output=-1.5, max_output=1.5), # Base
-                PID(kp=-0.5, ki=-0.0, kd=-0.1, min_output=-1.5, max_output=1.5)  # Elbow
+                PID(kp=0.3, ki=0.0, kd=0.1, min_output=-1.5, max_output=1.5), # Base
+                PID(kp=0.5, ki=0.0, kd=0.1, min_output=-1.5, max_output=1.5)  # Elbow
             ]
             
             self.subscription = self.create_subscription(JointState, '/arm/state', self.state_callback, 10)

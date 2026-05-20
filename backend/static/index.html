@@ -3,52 +3,55 @@
 <head>
     <title>Robotic Arm Control</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; background: #f0f0f0; }
+        body { font-family: sans-serif; max-width: 640px; margin: 20px auto; background: #f0f0f0; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .control-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
         input[type="range"] { width: 100%; }
+        input[type="number"] { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; width: 80px; }
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .data-item { background: #eee; padding: 10px; border-radius: 4px; }
+        .data-item.warning { background: #fff3cd; }
+        .data-item.critical { background: #fde8e8; }
+        .data-label { font-size: 0.8em; color: #555; margin-bottom: 4px; }
         .data-value { font-family: monospace; font-size: 1.2em; color: #d32f2f; }
+        .data-unit { font-size: 0.75em; color: #888; margin-left: 2px; }
+        #status-bar { font-size: 0.85em; color: #666; margin-top: 8px; }
+        button { width: 100%; padding: 10px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
+        button:hover { background: #1565c0; }
+        .row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .row label { margin: 0; white-space: nowrap; }
     </style>
 </head>
 <body>
     <h1>Arm Control Center</h1>
-    
+
+    <div class="card">
+        <div class="row">
+            <label>Robot ID:</label>
+            <input type="number" id="robot-id" value="1" min="1" step="1">
+        </div>
+        <div id="status-bar">Polling...</div>
+    </div>
+
     <div class="card">
         <h2>Live Telemetry</h2>
-        <div class="data-grid">
-            <div class="data-item">
-                <label>Base Position (rad)</label>
-                <div id="base-pos" class="data-value">0.00</div>
-            </div>
-            <div class="data-item">
-                <label>Elbow Position (rad)</label>
-                <div id="elbow-pos" class="data-value">0.00</div>
-            </div>
-            <div class="data-item">
-                <label>Base Effort (Nm)</label>
-                <div id="base-eff" class="data-value">0.00</div>
-            </div>
-            <div class="data-item">
-                <label>Elbow Effort (Nm)</label>
-                <div id="elbow-eff" class="data-value">0.00</div>
-            </div>
+        <div id="sensors-grid" class="data-grid">
+            <div class="data-item"><div class="data-label">—</div><div class="data-value">—</div></div>
         </div>
     </div>
 
     <div class="card">
         <h2>Manual Control</h2>
         <div class="control-group">
-            <label>Base Joint Angle: <span id="base-target-val">0</span> rad</label>
+            <label>Base Joint (Axis 0): <span id="base-target-val">0.00</span> rad</label>
             <input type="range" id="base-slider" min="-3.14" max="3.14" step="0.01" value="0">
         </div>
         <div class="control-group">
-            <label>Elbow Joint Angle: <span id="elbow-target-val">0</span> rad</label>
+            <label>Elbow Joint (Axis 1): <span id="elbow-target-val">0.00</span> rad</label>
             <input type="range" id="elbow-slider" min="-3.14" max="3.14" step="0.01" value="0">
         </div>
-        <button id="send-btn" style="width: 100%; padding: 10px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">Send Command</button>
+        <button id="send-btn">Send Command</button>
     </div>
 
     <script>
@@ -57,45 +60,55 @@
         const baseTargetVal = document.getElementById('base-target-val');
         const elbowTargetVal = document.getElementById('elbow-target-val');
         const sendBtn = document.getElementById('send-btn');
+        const statusBar = document.getElementById('status-bar');
+        const sensorsGrid = document.getElementById('sensors-grid');
+        const robotIdInput = document.getElementById('robot-id');
 
-        // Update labels on move
-        baseSlider.oninput = () => baseTargetVal.innerText = baseSlider.value;
-        elbowSlider.oninput = () => elbowTargetVal.innerText = elbowSlider.value;
+        baseSlider.oninput = () => baseTargetVal.innerText = parseFloat(baseSlider.value).toFixed(2);
+        elbowSlider.oninput = () => elbowTargetVal.innerText = parseFloat(elbowSlider.value).toFixed(2);
 
-        // Send command
         sendBtn.onclick = async () => {
-            const data = {
-                base: parseFloat(baseSlider.value),
-                elbow: parseFloat(elbowSlider.value)
-            };
-            await fetch('/api/command', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-        };
-
-        // WebSocket for Telemetry
-        const ws = new WebSocket(`ws://${window.location.host}/ws/telemetry`);
-        ws.onmessage = (event) => {
+            const robotId = parseInt(robotIdInput.value);
+            const angles = [parseFloat(baseSlider.value), parseFloat(elbowSlider.value)];
             try {
-                const state = JSON.parse(event.data);
-                // console.log("Incoming state:", state); // Uncomment for verbose debug
-                if (state.position && state.position.length >= 2) {
-                    document.getElementById('base-pos').innerText = state.position[0].toFixed(3);
-                    document.getElementById('elbow-pos').innerText = state.position[1].toFixed(3);
-                }
-                if (state.effort && state.effort.length >= 2) {
-                    document.getElementById('base-eff').innerText = state.effort[0].toFixed(3);
-                    document.getElementById('elbow-eff').innerText = state.effort[1].toFixed(3);
-                }
+                const res = await fetch('/api/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ robot_id: robotId, angles })
+                });
+                const data = await res.json();
+                statusBar.textContent = data.status === 'success'
+                    ? `Command sent: [${angles.map(v => v.toFixed(2)).join(', ')}]`
+                    : `Error: ${data.message}`;
             } catch (e) {
-                console.error("Error processing telemetry:", e);
+                statusBar.textContent = `Send failed: ${e.message}`;
             }
         };
-        ws.onopen = () => console.log("Connected to Telemetry WebSocket");
-        ws.onerror = (e) => console.error("WebSocket Error:", e);
-        ws.onclose = () => console.warn("WebSocket Closed");
+
+        async function pollTelemetry() {
+            const robotId = parseInt(robotIdInput.value);
+            try {
+                const res = await fetch(`/api/robots/${robotId}/telemetry`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                const robot = data.robot;
+                statusBar.textContent = `Robot: ${robot.name} (${robot.model}) — status: ${robot.status}`;
+
+                sensorsGrid.innerHTML = data.sensors.map(s => `
+                    <div class="data-item ${s.status !== 'ok' ? s.status : ''}">
+                        <div class="data-label">${s.label}</div>
+                        <div class="data-value">${s.value.toFixed(3)}<span class="data-unit">${s.unit}</span></div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                statusBar.textContent = `Telemetry error: ${e.message}`;
+            }
+        }
+
+        pollTelemetry();
+        setInterval(pollTelemetry, 1000);
     </script>
 </body>
 </html>

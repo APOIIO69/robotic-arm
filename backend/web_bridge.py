@@ -138,18 +138,30 @@ def get_robot_telemetry(robot_id: int):
     prefix = robot[5]
     live_data = ros_node.robots_state.get(prefix, {}) if ros_node else {}
     positions = live_data.get("position", [])
-    
+    efforts   = live_data.get("effort",   [])
+
     mapped_sensors = []
     overall_status = "ok"
-    for i, s in enumerate(sensors):
-        val = positions[i] if i < len(positions) else 0.0
+    pos_idx = 0
+    eff_idx = 0
+    for s in sensors:
+        sensor_type = s[3]
+        if sensor_type == "position":
+            val = positions[pos_idx] if pos_idx < len(positions) else 0.0
+            pos_idx += 1
+        elif sensor_type == "effort":
+            val = efforts[eff_idx] if eff_idx < len(efforts) else 0.0
+            eff_idx += 1
+        else:
+            val = 0.0
+
         status = "ok"
         if s[5] is not None and val < s[5]: status = "warning"
         if s[6] is not None and val > s[6]: status = "critical"
-        
+
         if status == "critical": overall_status = "critical"
         elif status == "warning" and overall_status == "ok": overall_status = "warning"
-        
+
         mapped_sensors.append({
             "id": s[0],
             "label": s[2],

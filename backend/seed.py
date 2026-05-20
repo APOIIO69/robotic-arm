@@ -27,8 +27,8 @@ def seed():
 
     # Seed Sensors
     sensors = [
-        (robot_id, "Температура J1", "temperature", "°C", None, 80.0),
-        (robot_id, "Ток двигателя J2", "current", "А", None, 15.0)
+        (robot_id, "Угол основания J1", "position", "рад", -3.14, 3.14),
+        (robot_id, "Угол локтя J2",     "position", "рад", -3.14, 3.14),
     ]
     cursor.executemany(
         "INSERT INTO sensors (robot_id, label, type, unit, normal_min, normal_max) VALUES (?, ?, ?, ?, ?, ?)",
