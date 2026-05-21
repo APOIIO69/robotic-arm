@@ -12,6 +12,8 @@ fun createKtorClient() = HttpClient(OkHttp) {
         json(Json { ignoreUnknownKeys = true })
     }
     defaultRequest {
-        url("http://10.0.2.2:8000") 
+        // Emulator:       http://10.0.2.2:8000
+        // Physical device: http://<VM-IP>:8000  (find with `ip addr` in Ubuntu)
+        url("http://192.168.0.100:8000")
     }
 }

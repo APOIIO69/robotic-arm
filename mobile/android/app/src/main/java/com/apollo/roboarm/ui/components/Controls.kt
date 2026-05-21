@@ -1,6 +1,9 @@
 package com.apollo.roboarm.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -106,6 +109,29 @@ fun ActionButton(
                 style = RoboArmTheme.typography.bodySm.copy(fontSize = 12.sp)
             )
         }
+    }
+}
+
+@Composable
+fun NavIconButton(
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(34.dp)
+            .background(RoboArmTheme.colors.elevated, RoundedCornerShape(10.dp))
+            .border(1.dp, RoboArmTheme.colors.border, RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = RoboArmTheme.colors.textSecondary
+        )
     }
 }
 

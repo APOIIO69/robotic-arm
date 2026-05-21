@@ -108,15 +108,41 @@ def get_line_robots(line_id: int):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM robots WHERE line_id = ?", (line_id,))
     robots = cursor.fetchall()
-    
+
     result = []
     for r in robots:
+        prefix = r[5]
+        cursor.execute("SELECT * FROM sensors WHERE robot_id = ?", (r[0],))
+        sensors = cursor.fetchall()
+        live_data = ros_node.robots_state.get(prefix, {}) if ros_node else {}
+        positions = live_data.get("position", [])
+        efforts   = live_data.get("effort",   [])
+
+        overall_status = "ok"
+        pos_idx = 0
+        eff_idx = 0
+        for s in sensors:
+            if s[3] == "position":
+                val = positions[pos_idx] if pos_idx < len(positions) else 0.0
+                pos_idx += 1
+            elif s[3] == "effort":
+                val = efforts[eff_idx] if eff_idx < len(efforts) else 0.0
+                eff_idx += 1
+            else:
+                val = 0.0
+            if s[5] is not None and val < s[5]:
+                if overall_status == "ok": overall_status = "warning"
+            if s[6] is not None and val > s[6]:
+                overall_status = "critical"
+
         result.append({
             "id": r[0],
             "name": r[2],
             "model": r[3],
             "type": r[4],
-            "status": "ok"
+            "status": overall_status,
+            "has_gripper": bool(r[6]),
+            "has_torch": bool(r[7])
         })
     conn.close()
     return {"robots": result}
@@ -168,7 +194,9 @@ def get_robot_telemetry(robot_id: int):
             "type": s[3],
             "unit": s[4],
             "value": val,
-            "status": status
+            "status": status,
+            "normal_min": s[5],
+            "normal_max": s[6],
         })
 
     return {

@@ -75,12 +75,20 @@ fun LineCard(
                 )
             }
 
-            // Indicators: 3 StatusDot (critical / warning / ok)
-            // As per DLS 6.4, showing 3 dots
+            // 3 dots: filled for the active status level, offline for others
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                StatusDot(status = RobotStatus.CRITICAL, size = 7.dp)
-                StatusDot(status = RobotStatus.WARNING, size = 7.dp)
-                StatusDot(status = RobotStatus.OK, size = 7.dp)
+                StatusDot(
+                    status = if (status == RobotStatus.CRITICAL) RobotStatus.CRITICAL else RobotStatus.OFFLINE,
+                    size = 7.dp
+                )
+                StatusDot(
+                    status = if (status == RobotStatus.WARNING) RobotStatus.WARNING else RobotStatus.OFFLINE,
+                    size = 7.dp
+                )
+                StatusDot(
+                    status = if (status == RobotStatus.OK) RobotStatus.OK else RobotStatus.OFFLINE,
+                    size = 7.dp
+                )
             }
         }
     }

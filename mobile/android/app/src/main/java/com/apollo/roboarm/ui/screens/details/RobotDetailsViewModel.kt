@@ -16,11 +16,12 @@ class RobotDetailsViewModel(private val repository: RoboArmRepository) : ViewMod
     val state = _state.asStateFlow()
 
     private var pollingJob: Job? = null
+    private var commandJob: Job? = null
 
     fun handleIntent(intent: RobotDetailsIntent) {
         when (intent) {
-            is RobotDetailsIntent.LoadTelemetry -> startPolling(intent.robotId)
-            is RobotDetailsIntent.UpdateAxis -> sendCommand(intent.robotId, intent.index, intent.value)
+            is RobotDetailsIntent.LoadTelemetry    -> startPolling(intent.robotId)
+            is RobotDetailsIntent.UpdateAxis       -> updateAxis(intent.robotId, intent.index, intent.value)
             is RobotDetailsIntent.ToggleEmergencyStop -> toggleEmergencyStop()
         }
     }
@@ -32,12 +33,19 @@ class RobotDetailsViewModel(private val repository: RoboArmRepository) : ViewMod
             while (isActive) {
                 repository.getRobotTelemetry(robotId)
                     .onSuccess { data ->
-                        _state.update { it.copy(
-                            isLoading = false,
-                            robot = data.robot,
-                            sensors = data.sensors,
-                            isEmergencyStopped = data.robot.status == "critical" // Simplification for MVP
-                        ) }
+                        val positionAngles = data.sensors
+                            .filter { it.type == "position" }
+                            .map { it.value }
+                        _state.update { current ->
+                            current.copy(
+                                isLoading = false,
+                                robot = data.robot,
+                                sensors = data.sensors,
+                                // Only update angles from server if user isn't actively controlling
+                                currentAngles = if (current.currentAngles.isEmpty()) positionAngles else current.currentAngles,
+                                error = null
+                            )
+                        }
                     }
                     .onFailure { err ->
                         _state.update { it.copy(isLoading = false, error = err.message) }
@@ -47,22 +55,27 @@ class RobotDetailsViewModel(private val repository: RoboArmRepository) : ViewMod
         }
     }
 
-    private fun sendCommand(robotId: Int, index: Int, value: Float) {
-        viewModelScope.launch {
-            // In a real app we'd maintain the current angles state
-            // For MVP we just send the one changed axis with 0s for others
-            val angles = MutableList(6) { 0.0f }
-            if (index < 6) angles[index] = value
+    private fun updateAxis(robotId: Int, index: Int, value: Float) {
+        // Update slider state immediately for responsive UI
+        _state.update { current ->
+            val angles = current.currentAngles.toMutableList()
+            while (angles.size <= index) angles.add(0.0f)
+            angles[index] = value
+            current.copy(currentAngles = angles)
+        }
+
+        if (_state.value.isEmergencyStopped) return
+
+        // Debounce the network call by 150ms
+        commandJob?.cancel()
+        commandJob = viewModelScope.launch {
+            delay(150)
+            val angles = _state.value.currentAngles
             repository.sendCommand(robotId, angles)
         }
     }
 
     private fun toggleEmergencyStop() {
-        val robotId = _state.value.robot?.id ?: return
-        viewModelScope.launch {
-            // Send empty angles or specific command if backend supports it
-            // For now, let's assume we send a specific value or just use the existing command
-            repository.sendCommand(robotId, emptyList())
-        }
+        _state.update { it.copy(isEmergencyStopped = !it.isEmergencyStopped) }
     }
 }

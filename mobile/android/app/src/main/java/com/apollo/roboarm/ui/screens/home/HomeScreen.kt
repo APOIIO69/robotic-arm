@@ -3,13 +3,15 @@ package com.apollo.roboarm.ui.screens.home
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.apollo.roboarm.data.models.LineDto
-import com.apollo.roboarm.data.models.RobotStatus
+import com.apollo.roboarm.data.models.toRobotStatus
 import com.apollo.roboarm.ui.components.LineCard
 import com.apollo.roboarm.ui.components.StatCard
 import com.apollo.roboarm.ui.theme.RoboArmColors
@@ -21,7 +23,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
-    onNavigateToLine: (Int) -> Unit
+    onNavigateToLine: (Int, String) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
     val colors = RoboArmTheme.colors
@@ -31,10 +33,10 @@ fun HomeScreen(
         viewModel.handleIntent(HomeIntent.LoadLines)
     }
 
-    LaunchedEffect(viewModel.effect) {
+    LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is HomeEffect.NavigateToLine -> onNavigateToLine(effect.lineId)
+                is HomeEffect.NavigateToLine -> onNavigateToLine(effect.lineId, effect.lineName)
             }
         }
     }
@@ -49,9 +51,7 @@ fun HomeScreen(
                         color = colors.textPrimary
                     )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colors.bg
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.bg)
             )
         },
         containerColor = colors.bg
@@ -67,6 +67,14 @@ fun HomeScreen(
             }
 
             item {
+                FilterTabs(
+                    selected = state.filter,
+                    onSelect = { viewModel.handleIntent(HomeIntent.SetFilter(it)) },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+            }
+
+            item {
                 Text(
                     text = "Производственные линии",
                     style = typography.titleMd,
@@ -77,7 +85,7 @@ fun HomeScreen(
 
             if (state.isLoading && state.lines.isEmpty()) {
                 item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp)) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = colors.blue)
                     }
                 }
@@ -89,13 +97,23 @@ fun HomeScreen(
                         modifier = Modifier.padding(16.dp)
                     )
                 }
+            } else if (state.filteredLines.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "Нет линий по выбранному фильтру",
+                            color = colors.textSecondary,
+                            style = typography.body
+                        )
+                    }
+                }
             }
 
-            items(state.lines) { line ->
+            items(state.filteredLines) { line ->
                 LineCard(
                     name = line.name,
                     description = line.description,
-                    status = mapStringToStatus(line.status),
+                    status = line.status.toRobotStatus(),
                     modifier = Modifier.clickable {
                         viewModel.handleIntent(HomeIntent.SelectLine(line.id))
                     }
@@ -106,7 +124,42 @@ fun HomeScreen(
 }
 
 @Composable
-fun DashboardSection(
+private fun FilterTabs(
+    selected: LineFilter,
+    onSelect: (LineFilter) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = RoboArmTheme.colors
+    val tabs = listOf(
+        LineFilter.ALL      to "Все",
+        LineFilter.CRITICAL to "Критические",
+        LineFilter.WARNING  to "Предупреждения"
+    )
+    LazyRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(tabs) { (filter, label) ->
+            FilterChip(
+                selected = selected == filter,
+                onClick = { onSelect(filter) },
+                label = { Text(text = label, style = RoboArmTheme.typography.bodySm) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = colors.blue,
+                    selectedLabelColor = androidx.compose.ui.graphics.Color.White,
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    labelColor = colors.textSecondary
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    enabled = true,
+                    selected = selected == filter,
+                    borderColor = if (selected == filter) colors.blue else colors.border,
+                    selectedBorderColor = colors.blue
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardSection(
     lines: List<LineDto>,
     colors: RoboArmColors,
     typography: RoboArmTypography
@@ -134,13 +187,5 @@ fun DashboardSection(
             color = if (criticalLines > 0) colors.critical else colors.ok,
             modifier = Modifier.weight(1f)
         )
-    }
-}
-
-private fun mapStringToStatus(status: String): RobotStatus {
-    return try {
-        RobotStatus.valueOf(status.uppercase())
-    } catch (e: Exception) {
-        RobotStatus.OK
     }
 }

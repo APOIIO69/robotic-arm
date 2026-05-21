@@ -19,9 +19,11 @@ class HomeViewModel(private val repository: RoboArmRepository) : ViewModel() {
 
     fun handleIntent(intent: HomeIntent) {
         when (intent) {
-            is HomeIntent.LoadLines -> loadLines()
+            is HomeIntent.LoadLines  -> loadLines()
+            is HomeIntent.SetFilter  -> _state.update { it.copy(filter = intent.filter) }
             is HomeIntent.SelectLine -> viewModelScope.launch {
-                _effect.emit(HomeEffect.NavigateToLine(intent.lineId))
+                val name = _state.value.lines.find { it.id == intent.lineId }?.name ?: ""
+                _effect.emit(HomeEffect.NavigateToLine(intent.lineId, name))
             }
         }
     }

@@ -1,8 +1,5 @@
 package com.apollo.roboarm.ui.screens.details
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -16,14 +13,16 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
-import com.apollo.roboarm.data.models.RobotStatus
 import com.apollo.roboarm.data.models.SensorDto
+import com.apollo.roboarm.data.models.toRobotStatus
 import com.apollo.roboarm.ui.components.EmergencyStopButton
+import com.apollo.roboarm.ui.components.NavIconButton
 import com.apollo.roboarm.ui.components.SensorTile
 import com.apollo.roboarm.ui.theme.RoboArmTheme
 import org.koin.androidx.compose.koinViewModel
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,9 +73,7 @@ fun RobotDetailsScreen(
                         modifier = Modifier.padding(end = 16.dp)
                     )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colors.bg
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.bg)
             )
         },
         containerColor = colors.bg
@@ -92,9 +89,7 @@ fun RobotDetailsScreen(
                         color = colors.blue
                     )
                 },
-                divider = {
-                    HorizontalDivider(color = colors.border)
-                }
+                divider = { HorizontalDivider(color = colors.border) }
             ) {
                 Tab(
                     selected = selectedTab == 0,
@@ -168,13 +163,21 @@ fun TelemetryTab(sensors: List<SensorDto>) {
         items(sensors) { sensor ->
             SensorTile(
                 label = sensor.label,
-                value = sensor.value.toString(),
+                value = "%.3f".format(sensor.value),
                 unit = sensor.unit,
-                status = mapStringToStatus(sensor.status),
-                progress = null // TODO: Calculate progress if applicable
+                status = sensor.status.toRobotStatus(),
+                progress = sensor.computeProgress()
             )
         }
     }
+}
+
+private fun SensorDto.computeProgress(): Float? {
+    val max = normal_max ?: return null
+    val min = normal_min ?: 0f
+    val range = max - min
+    if (range <= 0f) return null
+    return ((value - min) / range).coerceIn(0f, 1f)
 }
 
 @Composable
@@ -183,6 +186,9 @@ fun ControlTab(
     onUpdateAxis: (Int, Float) -> Unit,
     onToggleEmergencyStop: () -> Unit
 ) {
+    val colors = RoboArmTheme.colors
+    val typography = RoboArmTheme.typography
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -196,16 +202,25 @@ fun ControlTab(
 
         Text(
             text = "Оси манипулятора",
-            style = RoboArmTheme.typography.titleMd,
-            color = RoboArmTheme.colors.textPrimary
+            style = typography.titleMd,
+            color = colors.textPrimary
         )
 
-        // Axis Sliders Placeholders
-        repeat(6) { index ->
+        val positionSensors = state.sensors.filter { it.type == "position" }
+        val axisCount = positionSensors.size.coerceAtLeast(2)
+
+        repeat(axisCount) { index ->
+            val currentValue = state.currentAngles.getOrElse(index) { 0f }
+            val sensor = positionSensors.getOrNull(index)
+            val minRad = sensor?.normal_min ?: -3.14f
+            val maxRad = sensor?.normal_max ?: 3.14f
+
             AxisSlider(
-                label = "Ось ${index + 1}",
-                value = 0f, // TODO: Get from state
-                onValueChange = { onUpdateAxis(index, it) }
+                label = sensor?.label ?: "Ось ${index + 1}",
+                value = currentValue,
+                valueRange = minRad..maxRad,
+                onValueChange = { onUpdateAxis(index, it) },
+                enabled = !state.isEmergencyStopped
             )
         }
     }
@@ -215,64 +230,46 @@ fun ControlTab(
 fun AxisSlider(
     label: String,
     value: Float,
-    onValueChange: (Float) -> Unit
+    valueRange: ClosedFloatingPointRange<Float>,
+    onValueChange: (Float) -> Unit,
+    enabled: Boolean = true
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    val colors = RoboArmTheme.colors
+    val typography = RoboArmTheme.typography
+    val degrees = Math.toDegrees(value.toDouble()).roundToInt()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else 0.4f)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = label,
-                style = RoboArmTheme.typography.bodySm,
-                color = RoboArmTheme.colors.textSecondary
+                style = typography.bodySm,
+                color = colors.textSecondary
             )
             Text(
-                text = "${value.toInt()}°",
-                style = RoboArmTheme.typography.monoMd,
-                color = RoboArmTheme.colors.blue
+                text = "$degrees°",
+                style = typography.monoMd,
+                color = colors.blue
             )
         }
         Slider(
             value = value,
             onValueChange = onValueChange,
-            valueRange = -180f..180f,
+            valueRange = valueRange,
+            enabled = enabled,
             colors = SliderDefaults.colors(
-                thumbColor = RoboArmTheme.colors.blue,
-                activeTrackColor = RoboArmTheme.colors.blue,
-                inactiveTrackColor = RoboArmTheme.colors.elevated
+                thumbColor = colors.blue,
+                activeTrackColor = colors.blue,
+                inactiveTrackColor = colors.elevated,
+                disabledThumbColor = colors.textTertiary,
+                disabledActiveTrackColor = colors.textTertiary
             )
         )
-    }
-}
-
-@Composable
-fun NavIconButton(
-    icon: ImageVector,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .size(34.dp)
-            .background(RoboArmTheme.colors.elevated, RoundedCornerShape(10.dp))
-            .border(1.dp, RoboArmTheme.colors.border, RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-            tint = RoboArmTheme.colors.textSecondary
-        )
-    }
-}
-
-private fun mapStringToStatus(status: String): RobotStatus {
-    return try {
-        RobotStatus.valueOf(status.uppercase())
-    } catch (e: Exception) {
-        RobotStatus.OK
     }
 }

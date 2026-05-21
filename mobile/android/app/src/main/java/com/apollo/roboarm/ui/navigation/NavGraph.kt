@@ -7,13 +7,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.apollo.roboarm.ui.screens.details.RobotDetailsScreen
 import com.apollo.roboarm.ui.screens.home.HomeScreen
+import com.apollo.roboarm.ui.screens.line.LineDetailScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
 object Home
 
 @Serializable
-data class LineDetail(val id: Int)
+data class LineDetail(val id: Int, val name: String)
 
 @Serializable
 data class RobotDetail(val id: Int)
@@ -26,13 +27,21 @@ fun AppNavHost(navController: NavHostController) {
     ) {
         composable<Home> {
             HomeScreen(
-                onNavigateToLine = { id ->
-                    navController.navigate(LineDetail(id))
+                onNavigateToLine = { id, name ->
+                    navController.navigate(LineDetail(id, name))
                 }
             )
         }
-        composable<LineDetail> {
-            // TODO: Implement LineDetailScreen
+        composable<LineDetail> { backStackEntry ->
+            val detail: LineDetail = backStackEntry.toRoute()
+            LineDetailScreen(
+                lineId = detail.id,
+                lineName = detail.name,
+                onBack = { navController.popBackStack() },
+                onNavigateToRobot = { robotId ->
+                    navController.navigate(RobotDetail(robotId))
+                }
+            )
         }
         composable<RobotDetail> { backStackEntry ->
             val detail: RobotDetail = backStackEntry.toRoute()

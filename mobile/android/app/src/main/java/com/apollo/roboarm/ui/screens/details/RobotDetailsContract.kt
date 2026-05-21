@@ -7,6 +7,7 @@ data class RobotDetailsState(
     val isLoading: Boolean = false,
     val robot: RobotDetailDto? = null,
     val sensors: List<SensorDto> = emptyList(),
+    val currentAngles: List<Float> = emptyList(),
     val error: String? = null,
     val isEmergencyStopped: Boolean = false
 )

@@ -15,6 +15,20 @@ data class LineDto(
 data class LinesResponse(val lines: List<LineDto>)
 
 @Serializable
+data class RobotSummaryDto(
+    val id: Int,
+    val name: String,
+    val model: String,
+    val type: String,
+    val status: String,
+    val has_gripper: Boolean = false,
+    val has_torch: Boolean = false
+)
+
+@Serializable
+data class LineRobotsResponse(val robots: List<RobotSummaryDto>)
+
+@Serializable
 data class RobotDetailDto(
     val id: Int,
     val name: String,
@@ -29,7 +43,9 @@ data class SensorDto(
     val type: String,
     val unit: String,
     val value: Float,
-    val status: String
+    val status: String,
+    val normal_min: Float? = null,
+    val normal_max: Float? = null
 )
 
 @Serializable
